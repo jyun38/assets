@@ -1,0 +1,54 @@
+---
+title: "covid"
+author: "Ji Young Yun"
+date: "6/21/2020"
+output: html_document
+---
+
+```{r}
+covid <- read.csv("news.csv")
+str(covid)
+covid$publish_date <- as.character(covid$publish_date)
+covid$publish_date2 <- as.Date(covid$publish_date, "%Y/%m/%d %H:%M")
+library(wordcloud)
+library(RColorBrewer)
+library(wordcloud2)
+library(tm)
+titles <- covid$title
+docs <- VCorpus(VectorSource(titles))
+toSpace <- content_transformer(function (x, pattern ) gsub(pattern, " ", x))
+#docs <- tm_map(docs, toSpace, "")
+docs <- docs %>%
+  tm_map(content_transformer(tolower)) %>% 
+  tm_map(removeNumbers) %>% 
+  tm_map(removeWords, stopwords("english"))
+
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, c(stopwords("english"), "iii", "based", "using", "use",
+                                    "will", "can"))
+docs <- tm_map(docs, toSpace, ":")
+docs <- tm_map(docs, toSpace, "-")
+docs <- tm_map(docs, toSpace, ")")
+
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+df3 <- data.frame(word = names(words),freq=words)
+
+
+```
+
+```{r}
+df3
+
+head(df3, 10)
+findFreqTerms(dtm, lowfreq = 4)
+findAssocs(dtm, terms = "freedom", corlimit = 0.3)
+```
+
+```{r}
+barplot(df3[1:50,]$freq, las = 2, names.arg = df3[1:50,]$word,
+        col ="lightblue", main ="Most frequent words",
+        ylab = "Word frequencies")
+```
+
